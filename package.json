@@ -1,0 +1,28 @@
+{
+  "name": "vue-ts",
+  "version": "1.0.0",
+  "description": "Better Vue -> Typescript integration",
+  "main": "built/src/vue_ext.js",
+  "scripts": {
+    "test": "tsc && gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weichx/vue-ts.git"
+  },
+  "keywords": [
+    "vue",
+    "typescript"
+  ],
+  "author": "Matt Weichselbaum",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/weichx/vue-ts/issues"
+  },
+  "homepage": "https://github.com/weichx/vue-ts",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-jasmine": "^2.3.0",
+    "vue": "^1.0.21"
+  }
+}
