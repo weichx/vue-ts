@@ -3,7 +3,6 @@ import ComponentOption = vuejs.ComponentOption;
 import PropOption = vuejs.PropOption;
 import VueStatic = vuejs.VueStatic;
 import {VueApi} from "./vue_api";
-// import {Injector} from "needles/built/src/injector";
 
 //these are all the hooks vue expects, we need to grab these methods (if defined) from our input class
 //to slap them onto the vue instance
@@ -132,7 +131,6 @@ export function watch(expression : string, watchOptions? : IWatchOptions) {
     }
 }
 
-//todo accept vue component config object
 //@VueComponent annotation. expects a name ie 'my-component' and a template as defined by vue (html string or selector)
 //this is important for two reasons. first it allows us a nice, typed class interface instead of the object spaghetti
 //that normal vue components are defined in. secondly it allows us a hook to do dependency injection nicely with
@@ -181,8 +179,7 @@ export function VueComponent(name : string, template : string, vueConfig : any =
             props: getProps(),
             data: dataFn,
             //because of the way Vue extension works (with object.create) we never get our constructors invoked
-            //this code will invoke the class constructors as expected, handle some annotation actions and
-            //handle any dependency injection
+            //this code will invoke the class constructors as expected and handle some annotation actions
             created: function () : void {
                 //todo convert this to a plug-in architecture
                 Object.keys(watches).forEach((expression : string) => {
