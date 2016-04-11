@@ -173,9 +173,6 @@ export function VueComponent(name : string, template : string, vueConfig : any =
             return output;
         };
 
-        if (vueConfig) {
-
-        }
         var options : any = {
             name: name,
             template: template,
@@ -203,15 +200,16 @@ export function VueComponent(name : string, template : string, vueConfig : any =
                     }
                 });
 
+                for (var i = 0; i < VueComponentCreationPlugins.length; i++) {
+                    VueComponentCreationPlugins[i](this);
+                }
+
+                //todo move this to needle repo as a plugin
                 //at this point we have all our dependencies
                 //now we want to attached them to right properties in our instance
                 //todo -- possible problem: if a dependency is mocked AFTER we resolve
                 //the component, the mocks wont be applied. Unsure how to approach this
                 //because the created hook is not promise aware
-                //todo beforeCreate fns here
-                for (var i = 0; i < VueComponentCreationPlugins.length; i++) {
-                    VueComponentCreationPlugins[i](this);
-                }
 
                 // var keys = Object.keys(dependencyIndex);
                 // for (var i = 0; i < keys.length; i++) {
@@ -251,6 +249,14 @@ export function VueComponent(name : string, template : string, vueConfig : any =
 
         });
 
+        if (vueConfig) {
+            Object.keys(vueConfig).forEach(function (key : string) {
+                if(!options[key]) {
+                    options[key] = vueConfig[key];
+                }
+            })
+        }
+
         //look up the super class
         var Super : any = componentMap.get(target.prototype.__proto__) || Vue;
         //extend the super class (uses the vue method, not the typescript one)
@@ -275,7 +281,7 @@ export function VueComponent(name : string, template : string, vueConfig : any =
                     pluginPromise = VueComponentResolutionPlugins[i];
                 }
             }
-            
+            //todo move this to needle repo
             // var injectionPromise = Injector.getInjectedDependencies(targetClass).then(function (dependencies : IndexableObject) {
             //     dependencyIndex = dependencies;
             //     targetClass.setVueClass(subclass);
