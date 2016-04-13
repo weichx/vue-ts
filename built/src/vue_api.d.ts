@@ -1,0 +1,43 @@
+import Vue = vuejs.Vue;
+import ComponentOption = vuejs.ComponentOption;
+export declare class VueApi {
+    $data: any;
+    $el: HTMLElement;
+    $options: Object;
+    $parent: any;
+    $root: VueApi;
+    $children: VueApi[];
+    $refs: Object;
+    $els: Object;
+    $route: any;
+    $get: (exp: string, asStatement?: boolean) => any;
+    $set: <T>(key: string | number, value: T) => T;
+    $delete: (key: string) => void;
+    $eval: (expression: string) => string;
+    $interpolate: (expression: string) => string;
+    $log: (keypath?: string) => void;
+    $watch: (expOrFn: string | Function, callback: ((newVal: any, oldVal?: any) => any) | string, options?: {
+        deep?: boolean;
+        immediate?: boolean;
+    }) => Function;
+    $nextTick: (callback: Function) => void;
+    $appendTo: (target: (HTMLElement | string), callback?: Function, withTransition?: boolean) => this;
+    $prependTo: (target: (HTMLElement | string), callback?: Function, withTransition?: boolean) => this;
+    $before: (target: (HTMLElement | string), callback?: Function, withTransition?: boolean) => this;
+    $after: (target: (HTMLElement | string), callback?: Function, withTransition?: boolean) => this;
+    $remove: (callback?: Function) => this;
+    $on: (event: string, callback: Function) => this;
+    $once: (event: string, callback: Function) => this;
+    $off: (event: string, callback?: Function) => this;
+    $emit: (event: string, ...args: any[]) => this;
+    $broadcast: (event: string, ...args: any[]) => this;
+    $dispatch: (event: string, ...args: any[]) => this;
+    $mount: (elementOrSelector?: (HTMLElement | string)) => this;
+    $destroy: (remove?: boolean) => void;
+    $compile: (el: Element | DocumentFragment, host?: Vue) => Function;
+    protected _init: (options?: ComponentOption) => void;
+    private static __map;
+    private static __vueType;
+    private static setVueClass(subclass);
+    static getVueClassAsync(): any;
+}

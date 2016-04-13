@@ -317,3 +317,4 @@ export type InstanceCallback = (instance : any, componentName? : string, targetC
 
 export var VueComponentCreationPlugins : Array<InstanceCallback> = [];
 export var VueComponentResolutionPlugins : Array<ClassCallback> = [];
+export { VueApi }

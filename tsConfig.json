@@ -6,7 +6,8 @@
     "outDir": "built",
     "rootDir": ".",
     "sourceMap": false,
-    "module": "commonjs"
+    "module": "commonjs",
+    "declaration": true
   },
   "exclude": [
     "typings/browser.d.ts",

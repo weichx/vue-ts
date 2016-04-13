@@ -1,5 +1,6 @@
 var Vue = require('vue');
-// import {Injector} from "needles/built/src/injector";
+var vue_api_1 = require("./vue_api");
+exports.VueApi = vue_api_1.VueApi;
 //these are all the hooks vue expects, we need to grab these methods (if defined) from our input class
 //to slap them onto the vue instance
 var internalHooks = [
@@ -87,7 +88,6 @@ function watch(expression, watchOptions) {
     };
 }
 exports.watch = watch;
-//todo accept vue component config object
 //@VueComponent annotation. expects a name ie 'my-component' and a template as defined by vue (html string or selector)
 //this is important for two reasons. first it allows us a nice, typed class interface instead of the object spaghetti
 //that normal vue components are defined in. secondly it allows us a hook to do dependency injection nicely with
@@ -124,8 +124,6 @@ function VueComponent(name, template, vueConfig) {
             });
             return output;
         };
-        if (vueConfig) {
-        }
         var options = {
             name: name,
             template: template,
@@ -134,8 +132,7 @@ function VueComponent(name, template, vueConfig) {
             props: getProps(),
             data: dataFn,
             //because of the way Vue extension works (with object.create) we never get our constructors invoked
-            //this code will invoke the class constructors as expected, handle some annotation actions and
-            //handle any dependency injection
+            //this code will invoke the class constructors as expected and handle some annotation actions
             created: function () {
                 var _this = this;
                 //todo convert this to a plug-in architecture
@@ -153,15 +150,15 @@ function VueComponent(name, template, vueConfig) {
                         _this.$on(key, descriptor.method);
                     }
                 });
+                for (var i = 0; i < exports.VueComponentCreationPlugins.length; i++) {
+                    exports.VueComponentCreationPlugins[i](this);
+                }
+                //todo move this to needle repo as a plugin
                 //at this point we have all our dependencies
                 //now we want to attached them to right properties in our instance
                 //todo -- possible problem: if a dependency is mocked AFTER we resolve
                 //the component, the mocks wont be applied. Unsure how to approach this
                 //because the created hook is not promise aware
-                //todo beforeCreate fns here
-                for (var i = 0; i < exports.VueComponentCreationPlugins.length; i++) {
-                    exports.VueComponentCreationPlugins[i](this);
-                }
                 // var keys = Object.keys(dependencyIndex);
                 // for (var i = 0; i < keys.length; i++) {
                 //     (<any>this)[keys[i]] = dependencyIndex[keys[i]];
@@ -193,6 +190,13 @@ function VueComponent(name, template, vueConfig) {
                 };
             }
         });
+        if (vueConfig) {
+            Object.keys(vueConfig).forEach(function (key) {
+                if (!options[key]) {
+                    options[key] = vueConfig[key];
+                }
+            });
+        }
         //look up the super class
         var Super = componentMap.get(target.prototype.__proto__) || Vue;
         //extend the super class (uses the vue method, not the typescript one)
@@ -214,6 +218,7 @@ function VueComponent(name, template, vueConfig) {
                     pluginPromise = exports.VueComponentResolutionPlugins[i];
                 }
             }
+            //todo move this to needle repo
             // var injectionPromise = Injector.getInjectedDependencies(targetClass).then(function (dependencies : IndexableObject) {
             //     dependencyIndex = dependencies;
             //     targetClass.setVueClass(subclass);
