@@ -98,7 +98,7 @@ exports.watch = watch;
 //annotated, we need to collect the values and compile the corresponding vue description. We also need to suck in
 //all the life cycle hook methods on the typescript class, gather all the property accessors(get/set) and then
 //slap all this data onto a new config object when the component's `created` hook fires.
-function VueComponent(name, template, vueConfig) {
+function component(name, template, vueConfig) {
     if (vueConfig === void 0) { vueConfig = {}; }
     return function (target) {
         var proto = target.prototype;
@@ -150,8 +150,8 @@ function VueComponent(name, template, vueConfig) {
                         _this.$on(key, descriptor.method);
                     }
                 });
-                for (var i = 0; i < exports.VueComponentCreationPlugins.length; i++) {
-                    exports.VueComponentCreationPlugins[i](this);
+                for (var i = 0; i < creationPlugins.length; i++) {
+                    creationPlugins[i](this);
                 }
                 //todo move this to needle repo as a plugin
                 //at this point we have all our dependencies
@@ -190,6 +190,7 @@ function VueComponent(name, template, vueConfig) {
                 };
             }
         });
+        //todo this should be a merge
         if (vueConfig) {
             Object.keys(vueConfig).forEach(function (key) {
                 if (!options[key]) {
@@ -201,7 +202,7 @@ function VueComponent(name, template, vueConfig) {
         var Super = componentMap.get(target.prototype.__proto__) || Vue;
         //extend the super class (uses the vue method, not the typescript one)
         var subclass = Super.extend(options);
-        var dependencyIndex = null;
+        //todo move to plugin var dependencyIndex : IndexableObject = null;
         //map our prototype to the subclass in case something wants to extend
         //our subclass later on.
         componentMap.set(proto, subclass);
@@ -211,11 +212,11 @@ function VueComponent(name, template, vueConfig) {
         //in the component's normal life cycle
         (function (targetClass) {
             var pluginPromise = Promise.resolve();
-            for (var i = 0; i < exports.VueComponentResolutionPlugins.length; i++) {
-                var plugin = exports.VueComponentResolutionPlugins[i];
+            for (var i = 0; i < resolutionPlugins.length; i++) {
+                var plugin = resolutionPlugins[i];
                 pluginPromise.then(resolvePlugin(plugin, targetClass, subclass));
-                if (i !== exports.VueComponentResolutionPlugins.length - 1) {
-                    pluginPromise = exports.VueComponentResolutionPlugins[i];
+                if (i !== resolutionPlugins.length - 1) {
+                    pluginPromise = promisify(resolutionPlugins[i]);
                 }
             }
             //todo move this to needle repo
@@ -224,10 +225,9 @@ function VueComponent(name, template, vueConfig) {
             //     targetClass.setVueClass(subclass);
             //     return subclass;
             // });
-            pluginPromise.then(new Promise(function (resolve) {
+            pluginPromise.then(function () {
                 targetClass.setVueClass(subclass);
-                resolve();
-            }));
+            });
             Vue.component(name, function (resolve) {
                 // injectionPromise.then(resolve);
                 pluginPromise.then(function () {
@@ -238,7 +238,18 @@ function VueComponent(name, template, vueConfig) {
         return target;
     };
 }
-exports.VueComponent = VueComponent;
+function plugin(fn) {
+    fn(creationPlugins, resolutionPlugins);
+}
+function promisify(input) {
+    if (!input)
+        return Promise.resolve(input);
+    if (typeof input === 'object' || typeof input === 'function') {
+        if (typeof input.then === 'function')
+            return input;
+    }
+    return Promise.resolve(input);
+}
 function resolvePlugin(pluginFn, targetClass, vueClass) {
     var retn = pluginFn(targetClass, vueClass);
     if (retn && typeof retn.then === 'function') {
@@ -248,5 +259,10 @@ function resolvePlugin(pluginFn, targetClass, vueClass) {
         return Promise.resolve();
     }
 }
-exports.VueComponentCreationPlugins = [];
-exports.VueComponentResolutionPlugins = [];
+var creationPlugins = [];
+var resolutionPlugins = [];
+exports.VueComponent = (function () {
+    var retn = component;
+    retn.plugin = plugin;
+    return retn;
+})();

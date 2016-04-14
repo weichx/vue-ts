@@ -44,16 +44,10 @@ export interface IPropOptions {
     coerce : (value : any) => any;
 }
 
-export interface Indexable<T> {
-    [key : string] : T;
-}
-
-export type IndexableObject = Indexable<any>;
-
-type DataFields = Indexable<string>;
-type PropFields = Indexable<IPropOptions>;
-type EventFields = Indexable<IEventDescriptor>;
-type WatchFields = Indexable<any>;
+type DataFields = {[key : string] : string};
+type PropFields = {[key : string] : IPropOptions};
+type EventFields = {[key : string] : IEventDescriptor};
+type WatchFields = {[key: string] : any};
 
 var componentMap = new Map<Object, VueStatic>();
 var dataFieldMap = new Map<Function, DataFields>(); //maps a type to a map of data fields
@@ -131,6 +125,11 @@ export function watch(expression : string, watchOptions? : IWatchOptions) {
     }
 }
 
+export interface IVueComponent {
+    (name : string, template : string, vueConfig? : any) : any;
+    plugin : (fn : VueComponentPluginFn) => void;
+}
+
 //@VueComponent annotation. expects a name ie 'my-component' and a template as defined by vue (html string or selector)
 //this is important for two reasons. first it allows us a nice, typed class interface instead of the object spaghetti
 //that normal vue components are defined in. secondly it allows us a hook to do dependency injection nicely with
@@ -142,7 +141,8 @@ export function watch(expression : string, watchOptions? : IWatchOptions) {
 //annotated, we need to collect the values and compile the corresponding vue description. We also need to suck in
 //all the life cycle hook methods on the typescript class, gather all the property accessors(get/set) and then
 //slap all this data onto a new config object when the component's `created` hook fires.
-export function VueComponent(name : string, template : string, vueConfig : any = {}) {
+
+function component(name : string, template : string, vueConfig : any = {}) : any{
     return function (target : any) {
 
         var proto : any = target.prototype;
@@ -197,8 +197,8 @@ export function VueComponent(name : string, template : string, vueConfig : any =
                     }
                 });
 
-                for (var i = 0; i < VueComponentCreationPlugins.length; i++) {
-                    VueComponentCreationPlugins[i](this);
+                for (var i = 0; i < creationPlugins.length; i++) {
+                    creationPlugins[i](this);
                 }
 
                 //todo move this to needle repo as a plugin
@@ -246,6 +246,7 @@ export function VueComponent(name : string, template : string, vueConfig : any =
 
         });
 
+        //todo this should be a merge
         if (vueConfig) {
             Object.keys(vueConfig).forEach(function (key : string) {
                 if(!options[key]) {
@@ -258,7 +259,7 @@ export function VueComponent(name : string, template : string, vueConfig : any =
         var Super : any = componentMap.get(target.prototype.__proto__) || Vue;
         //extend the super class (uses the vue method, not the typescript one)
         var subclass = Super.extend(options);
-        var dependencyIndex : IndexableObject = null;
+        //todo move to plugin var dependencyIndex : IndexableObject = null;
         //map our prototype to the subclass in case something wants to extend
         //our subclass later on.
         componentMap.set(proto, subclass);
@@ -268,14 +269,14 @@ export function VueComponent(name : string, template : string, vueConfig : any =
         //in the component's normal life cycle
         (function (targetClass : any) {
             var pluginPromise : any = Promise.resolve();
-            for (var i = 0; i < VueComponentResolutionPlugins.length; i++) {
+            for (var i = 0; i < resolutionPlugins.length; i++) {
 
-                var plugin = VueComponentResolutionPlugins[i];
+                var plugin = resolutionPlugins[i];
 
                 pluginPromise.then(resolvePlugin(plugin, targetClass, subclass));
 
-                if (i !== VueComponentResolutionPlugins.length - 1) {
-                    pluginPromise = VueComponentResolutionPlugins[i];
+                if (i !== resolutionPlugins.length - 1) {
+                    pluginPromise = promisify(resolutionPlugins[i]);
                 }
             }
             //todo move this to needle repo
@@ -285,10 +286,9 @@ export function VueComponent(name : string, template : string, vueConfig : any =
             //     return subclass;
             // });
 
-            pluginPromise.then(new Promise(function (resolve : any) {
+            pluginPromise.then(function () {
                 targetClass.setVueClass(subclass);
-                resolve();
-            }));
+            });
 
             Vue.component(name, function (resolve : any) {
                 // injectionPromise.then(resolve);
@@ -302,6 +302,18 @@ export function VueComponent(name : string, template : string, vueConfig : any =
     }
 }
 
+function plugin(fn : VueComponentPluginFn) {
+    fn(creationPlugins, resolutionPlugins);
+}
+
+function promisify(input : any) : Promise<any> {
+    if(!input) return Promise.resolve(input);
+    if(typeof input === 'object' || typeof input === 'function') {
+        if(typeof input.then === 'function') return input;
+    }
+    return Promise.resolve(input);
+}
+
 function resolvePlugin(pluginFn : Function, targetClass : Function, vueClass : VueApi) {
     var retn = pluginFn(targetClass, vueClass);
     if (retn && typeof retn.then === 'function') {
@@ -312,9 +324,16 @@ function resolvePlugin(pluginFn : Function, targetClass : Function, vueClass : V
     }
 }
 
-export type ClassCallback = (targetClass : Function, vueClass : Function) => any
+export type ClassCallback = (targetClass : Function, vueClass? : Function) => any
 export type InstanceCallback = (instance : any, componentName? : string, targetClass? : Function) => any;
+export type VueComponentPluginFn = (instanceChain : Array<InstanceCallback>, resolutionChain? : Array<ClassCallback>) => void
 
-export var VueComponentCreationPlugins : Array<InstanceCallback> = [];
-export var VueComponentResolutionPlugins : Array<ClassCallback> = [];
+var creationPlugins : Array<InstanceCallback> = [];
+var resolutionPlugins : Array<ClassCallback> = [];
 export { VueApi }
+
+export var VueComponent : IVueComponent = (function() {
+    var retn : any = component;
+    retn.plugin = plugin;
+    return retn;
+})();

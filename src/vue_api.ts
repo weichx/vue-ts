@@ -45,7 +45,7 @@ export class VueApi {
     private static __map : any = {};
     private static __vueType : any;
 
-    private  static setVueClass(subclass : any) : void {
+    private static setVueClass(subclass : any) : void {
         this.__vueType = subclass;
         var array = this.__map[this.toString()];
         if(array) {

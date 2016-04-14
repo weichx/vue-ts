@@ -1,7 +1,8 @@
 
-import {VueComponent, VueComponentCreationPlugins, VueComponentResolutionPlugins} from "../src/vue_ext";
+import {VueComponent} from "../src/vue_ext";
 import {VueApi} from "../src/vue_api";
 import Vue = require('vue');
+import {InstanceCallback, ClassCallback} from "../built/src/vue_ext";
 
 type DoneFn = () => void;
 
@@ -14,10 +15,16 @@ Vue.config.silent = true;
 describe("Component Creation Plugins", function () {
    
     it('should run creation plugins', function (done : DoneFn) {
-        
-        VueComponentCreationPlugins.push(function (instance : PluginTest) {
-            instance.property = "it worked";
+
+        VueComponent.plugin(function (instanceChain : Array<InstanceCallback>) {
+            instanceChain.push(function (instance : any) {
+                instance.property = "it worked";
+            });
         });
+
+        // VueComponentCreationPlugins.push(function (instance : PluginTest) {
+        //     instance.property = "it worked";
+        // });
         
         @VueComponent("plugin-test", "#noop")
         class PluginTest extends VueApi {
@@ -32,8 +39,10 @@ describe("Component Creation Plugins", function () {
 
     it('should run creation plugins on all instances', function(done : DoneFn) {
         var i = 0;
-        VueComponentCreationPlugins.push(function (instance : PluginTest) {
-            instance.property = i++;
+        VueComponent.plugin(function (instanceChain : Array<InstanceCallback>) {
+            instanceChain.push(function (instance : any) {
+                instance.property = i++;
+            });
         });
 
         @VueComponent("plugin-test", "#noop")
@@ -55,15 +64,19 @@ describe("Component Resolution Plugins", function () {
     it('should run resolution plugins', function(done : DoneFn) {
         var i = 0;
 
-        VueComponentResolutionPlugins.push(function (type : any, vueClass : any) {
-            return new Promise(function (resolve : any) {
-                vueClass.someProp = i++;
-                setTimeout(resolve, 10);
+        VueComponent.plugin(function (instanceChain : Array<InstanceCallback>, classChain : Array<ClassCallback>) {
+            classChain.push(function (type : any, vueClass : Function) : any {
+                return new Promise(function (resolve : any) {
+                    (<any>vueClass).someProp = i++;
+                    setTimeout(resolve, 10);
+                });
             });
         });
 
         @VueComponent("plugin-test", "#noop")
-        class PluginTest extends VueApi { }
+        class PluginTest extends VueApi {
+            public someProp : number;
+        }
 
         getVueClass(PluginTest).then(function (type : any) {
             expect(type.someProp).toBe(0);

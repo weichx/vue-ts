@@ -18,9 +18,14 @@ function getVueClass(tsClass) {
 Vue.config.silent = true;
 describe("Component Creation Plugins", function () {
     it('should run creation plugins', function (done) {
-        vue_ext_1.VueComponentCreationPlugins.push(function (instance) {
-            instance.property = "it worked";
+        vue_ext_1.VueComponent.plugin(function (instanceChain) {
+            instanceChain.push(function (instance) {
+                instance.property = "it worked";
+            });
         });
+        // VueComponentCreationPlugins.push(function (instance : PluginTest) {
+        //     instance.property = "it worked";
+        // });
         var PluginTest = (function (_super) {
             __extends(PluginTest, _super);
             function PluginTest() {
@@ -38,8 +43,10 @@ describe("Component Creation Plugins", function () {
     });
     it('should run creation plugins on all instances', function (done) {
         var i = 0;
-        vue_ext_1.VueComponentCreationPlugins.push(function (instance) {
-            instance.property = i++;
+        vue_ext_1.VueComponent.plugin(function (instanceChain) {
+            instanceChain.push(function (instance) {
+                instance.property = i++;
+            });
         });
         var PluginTest = (function (_super) {
             __extends(PluginTest, _super);
@@ -61,10 +68,12 @@ describe("Component Creation Plugins", function () {
 describe("Component Resolution Plugins", function () {
     it('should run resolution plugins', function (done) {
         var i = 0;
-        vue_ext_1.VueComponentResolutionPlugins.push(function (type, vueClass) {
-            return new Promise(function (resolve) {
-                vueClass.someProp = i++;
-                setTimeout(resolve, 10);
+        vue_ext_1.VueComponent.plugin(function (instanceChain, classChain) {
+            classChain.push(function (type, vueClass) {
+                return new Promise(function (resolve) {
+                    vueClass.someProp = i++;
+                    setTimeout(resolve, 10);
+                });
             });
         });
         var PluginTest = (function (_super) {
