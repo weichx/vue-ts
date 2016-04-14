@@ -151,7 +151,7 @@ function component(name, template, vueConfig) {
                     }
                 });
                 for (var i = 0; i < creationPlugins.length; i++) {
-                    creationPlugins[i](this);
+                    creationPlugins[i](this, name, target);
                 }
                 //todo move this to needle repo as a plugin
                 //at this point we have all our dependencies

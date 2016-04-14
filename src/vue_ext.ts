@@ -198,7 +198,7 @@ function component(name : string, template : string, vueConfig : any = {}) : any
                 });
 
                 for (var i = 0; i < creationPlugins.length; i++) {
-                    creationPlugins[i](this);
+                    creationPlugins[i](this, name, target);
                 }
 
                 //todo move this to needle repo as a plugin
