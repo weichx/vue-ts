@@ -1,6 +1,6 @@
 {
   "name": "vue-ts",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Better Vue -> Typescript integration",
   "main": "built/src/vue_ext.js",
   "typings": "build/src/vue_text.d.ts",
