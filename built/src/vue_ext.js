@@ -198,14 +198,15 @@ function component(name, template, vueConfig) {
         //and instance's constructor runs all dependencies have been injected and are available
         //in the component's normal life cycle
         (function (targetClass) {
-            var pluginPromise = Promise.all(resolutionPlugins.map(function (fn) {
+            var promises = resolutionPlugins.map(function (fn) {
                 return fn(targetClass, vueClass);
-            })).then(function () {
+            });
+            promises.push(Super.pluginPromise);
+            vueClass.pluginPromise = Promise.all(promises).then(function () {
                 targetClass.setVueClass(vueClass);
             });
             Vue.component(name, function (resolve) {
-                // injectionPromise.then(resolve);
-                pluginPromise.then(function () {
+                vueClass.pluginPromise.then(function () {
                     resolve(vueClass);
                 });
             });
@@ -213,6 +214,7 @@ function component(name, template, vueConfig) {
         return target;
     };
 }
+Vue.pluginPromise = Promise.resolve();
 function plugin(fn) {
     fn(creationPlugins, resolutionPlugins);
 }
@@ -221,5 +223,9 @@ var resolutionPlugins = [];
 exports.VueComponent = (function () {
     var retn = component;
     retn.plugin = plugin;
+    retn.reset = function () {
+        creationPlugins = [];
+        resolutionPlugins = [];
+    };
     return retn;
 })();

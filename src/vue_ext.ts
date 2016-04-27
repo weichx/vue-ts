@@ -47,7 +47,7 @@ export interface IPropOptions {
 type DataFields = {[key : string] : string};
 type PropFields = {[key : string] : IPropOptions};
 type EventFields = {[key : string] : IEventDescriptor};
-type WatchFields = {[key: string] : any};
+type WatchFields = {[key : string] : any};
 
 var componentMap = new Map<Object, VueStatic>();
 var dataFieldMap = new Map<Function, DataFields>(); //maps a type to a map of data fields
@@ -142,7 +142,7 @@ export interface IVueComponent {
 //all the life cycle hook methods on the typescript class, gather all the property accessors(get/set) and then
 //slap all this data onto a new config object when the component's `created` hook fires.
 
-function component(name : string, template : string, vueConfig : any = {}) : any{
+function component(name : string, template : string, vueConfig : any = {}) : any {
     return function (target : any) {
 
         var proto : any = target.prototype;
@@ -237,7 +237,7 @@ function component(name : string, template : string, vueConfig : any = {}) : any
         //todo this should be a merge
         if (vueConfig) {
             Object.keys(vueConfig).forEach(function (key : string) {
-                if(!options[key]) {
+                if (!options[key]) {
                     options[key] = vueConfig[key];
                 }
             })
@@ -254,17 +254,16 @@ function component(name : string, template : string, vueConfig : any = {}) : any
         //and instance's constructor runs all dependencies have been injected and are available
         //in the component's normal life cycle
         (function (targetClass : any) {
-
-            var pluginPromise = Promise.all(resolutionPlugins.map(function(fn : ClassCallback) {
+            var promises = resolutionPlugins.map(function (fn : ClassCallback) {
                 return fn(targetClass, vueClass);
-            })).then(function() {
+            });
+            promises.push(Super.pluginPromise);
+            vueClass.pluginPromise = Promise.all(promises).then(function () {
                 targetClass.setVueClass(vueClass);
-
             });
 
             Vue.component(name, function (resolve : any) {
-                // injectionPromise.then(resolve);
-                pluginPromise.then(function () {
+                vueClass.pluginPromise.then(function () {
                     resolve(vueClass);
                 });
             });
@@ -273,6 +272,8 @@ function component(name : string, template : string, vueConfig : any = {}) : any
         return target;
     }
 }
+
+(<any>Vue).pluginPromise = Promise.resolve();
 
 function plugin(fn : VueComponentPluginFn) {
     fn(creationPlugins, resolutionPlugins);
@@ -284,10 +285,14 @@ export type VueComponentPluginFn = (instanceChain : Array<InstanceCallback>, res
 
 var creationPlugins : Array<InstanceCallback> = [];
 var resolutionPlugins : Array<ClassCallback> = [];
-export { VueApi }
+export {VueApi}
 
-export var VueComponent : IVueComponent = (function() {
+export var VueComponent : IVueComponent = (function () {
     var retn : any = component;
     retn.plugin = plugin;
+    retn.reset = function () {
+        creationPlugins = [];
+        resolutionPlugins = [];
+    };
     return retn;
 })();

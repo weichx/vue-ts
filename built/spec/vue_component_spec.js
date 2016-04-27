@@ -92,3 +92,45 @@ describe("Component Resolution Plugins", function () {
         });
     });
 });
+describe('Inheritance', function () {
+    it('It should wait for parent class plugin promises to resolve', function (done) {
+        var timeout = 100;
+        vue_ext_1.VueComponent.plugin(function (instanceChain, classChain) {
+            classChain.push(function (type, vueClass) {
+                return new Promise(function (resolve) {
+                    setTimeout(function () {
+                        type.val = 'ran parent';
+                        resolve();
+                    }, timeout);
+                    timeout = 0;
+                });
+            });
+        });
+        var PluginTest = (function (_super) {
+            __extends(PluginTest, _super);
+            function PluginTest() {
+                _super.apply(this, arguments);
+            }
+            PluginTest.val = 'PARENT';
+            PluginTest = __decorate([
+                vue_ext_1.VueComponent('plugin-base', '#no-op')
+            ], PluginTest);
+            return PluginTest;
+        })(vue_api_1.VueApi);
+        var ChildClass = (function (_super) {
+            __extends(ChildClass, _super);
+            function ChildClass() {
+                _super.apply(this, arguments);
+            }
+            ChildClass.val = 'CHILD';
+            ChildClass = __decorate([
+                vue_ext_1.VueComponent('plugin-sub', '#no-op')
+            ], ChildClass);
+            return ChildClass;
+        })(PluginTest);
+        getVueClass(ChildClass).then(function (type) {
+            expect(PluginTest.val).toBe('ran parent');
+            done();
+        });
+    });
+});
