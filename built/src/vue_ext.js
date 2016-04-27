@@ -153,16 +153,6 @@ function component(name, template, vueConfig) {
                 for (var i = 0; i < creationPlugins.length; i++) {
                     creationPlugins[i](this, name, target);
                 }
-                //todo move this to needle repo as a plugin
-                //at this point we have all our dependencies
-                //now we want to attached them to right properties in our instance
-                //todo -- possible problem: if a dependency is mocked AFTER we resolve
-                //the component, the mocks wont be applied. Unsure how to approach this
-                //because the created hook is not promise aware
-                // var keys = Object.keys(dependencyIndex);
-                // for (var i = 0; i < keys.length; i++) {
-                //     (<any>this)[keys[i]] = dependencyIndex[keys[i]];
-                // }
                 target.call(this); //invoke the real constructor
                 //respect the users `created` hook if implemented
                 if (typeof proto.created === 'function')
@@ -201,37 +191,22 @@ function component(name, template, vueConfig) {
         //look up the super class
         var Super = componentMap.get(target.prototype.__proto__) || Vue;
         //extend the super class (uses the vue method, not the typescript one)
-        var subclass = Super.extend(options);
-        //todo move to plugin var dependencyIndex : IndexableObject = null;
-        //map our prototype to the subclass in case something wants to extend
-        //our subclass later on.
-        componentMap.set(proto, subclass);
+        var vueClass = Super.extend(options);
+        componentMap.set(proto, vueClass);
         //asynchronously declare our component. we want to resolve this only after
         //all our injected dependencies have been resolved. that way by the time
         //and instance's constructor runs all dependencies have been injected and are available
         //in the component's normal life cycle
         (function (targetClass) {
-            var pluginPromise = Promise.resolve();
-            for (var i = 0; i < resolutionPlugins.length; i++) {
-                var plugin = resolutionPlugins[i];
-                pluginPromise.then(resolvePlugin(plugin, targetClass, subclass));
-                if (i !== resolutionPlugins.length - 1) {
-                    pluginPromise = promisify(resolutionPlugins[i]);
-                }
-            }
-            //todo move this to needle repo
-            // var injectionPromise = Injector.getInjectedDependencies(targetClass).then(function (dependencies : IndexableObject) {
-            //     dependencyIndex = dependencies;
-            //     targetClass.setVueClass(subclass);
-            //     return subclass;
-            // });
-            pluginPromise.then(function () {
-                targetClass.setVueClass(subclass);
+            var pluginPromise = Promise.all(resolutionPlugins.map(function (fn) {
+                return fn(targetClass, vueClass);
+            })).then(function () {
+                targetClass.setVueClass(vueClass);
             });
             Vue.component(name, function (resolve) {
                 // injectionPromise.then(resolve);
                 pluginPromise.then(function () {
-                    resolve(subclass);
+                    resolve(vueClass);
                 });
             });
         })(target);
@@ -240,24 +215,6 @@ function component(name, template, vueConfig) {
 }
 function plugin(fn) {
     fn(creationPlugins, resolutionPlugins);
-}
-function promisify(input) {
-    if (!input)
-        return Promise.resolve(input);
-    if (typeof input === 'object' || typeof input === 'function') {
-        if (typeof input.then === 'function')
-            return input;
-    }
-    return Promise.resolve(input);
-}
-function resolvePlugin(pluginFn, targetClass, vueClass) {
-    var retn = pluginFn(targetClass, vueClass);
-    if (retn && typeof retn.then === 'function') {
-        return retn;
-    }
-    else {
-        return Promise.resolve();
-    }
 }
 var creationPlugins = [];
 var resolutionPlugins = [];
