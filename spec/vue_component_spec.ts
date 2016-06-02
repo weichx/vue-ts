@@ -86,6 +86,28 @@ describe("Component Resolution Plugins", function () {
 
 describe('Inheritance', function () {
 
+    fit('should invoke a base class constructor', function (done : DoneFn) {
+        class X extends VueApi {
+            public x : number;
+            constructor() {
+                super();
+                this.x = 1;
+            }
+        }
+        @VueComponent("", "")
+        class Y extends X {
+            constructor() {
+                super();
+            }
+        }
+
+        getVueClass(Y).then(function (type : any) {
+            var instance = new type();
+            expect(instance.x).toBe(1);
+            done();
+        })
+    });
+
     it('It should wait for parent class plugin promises to resolve', function (done : DoneFn) {
 
         var timeout = 100;

@@ -201,8 +201,17 @@ function component(name : string, template : string, vueConfig : any = {}) : any
                     creationPlugins[i](this, name, target);
                 }
 
-                target.call(this); //invoke the real constructor
-
+                //invoke the real constructor
+                //unfortunately because of ES2015 bullshit, calling
+                //a constructor without new is now an error.
+                //this *should* get around that but I'm super unhappy about it
+                var targetInstance = new (<any>target)();
+                Object.keys(targetInstance).forEach((key : string) => {
+                    this[key] = targetInstance[key];
+                });
+                
+                //target.call(this); -> this no longer works :( thanks ES6, ya jerk
+                
                 //respect the users `created` hook if implemented
                 if (typeof proto.created === 'function') proto.created.call(this);
             }

@@ -93,6 +93,31 @@ describe("Component Resolution Plugins", function () {
     });
 });
 describe('Inheritance', function () {
+    fit('should invoke a base class constructor', function (done) {
+        var X = (function (_super) {
+            __extends(X, _super);
+            function X() {
+                _super.call(this);
+                this.x = 1;
+            }
+            return X;
+        })(vue_api_1.VueApi);
+        var Y = (function (_super) {
+            __extends(Y, _super);
+            function Y() {
+                _super.call(this);
+            }
+            Y = __decorate([
+                vue_ext_1.VueComponent("", "")
+            ], Y);
+            return Y;
+        })(X);
+        getVueClass(Y).then(function (type) {
+            var instance = new type();
+            expect(instance.x).toBe(1);
+            done();
+        });
+    });
     it('It should wait for parent class plugin promises to resolve', function (done) {
         var timeout = 100;
         vue_ext_1.VueComponent.plugin(function (instanceChain, classChain) {
