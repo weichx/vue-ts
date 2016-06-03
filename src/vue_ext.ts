@@ -3,6 +3,7 @@ import ComponentOption = vuejs.ComponentOption;
 import PropOption = vuejs.PropOption;
 import VueStatic = vuejs.VueStatic;
 import {VueApi} from "./vue_api";
+import {ES6ConstructorUtil} from "./es6_constructor_util";
 
 //these are all the hooks vue expects, we need to grab these methods (if defined) from our input class
 //to slap them onto the vue instance
@@ -204,14 +205,19 @@ function component(name : string, template : string, vueConfig : any = {}) : any
                 //invoke the real constructor
                 //unfortunately because of ES2015 bullshit, calling
                 //a constructor without new is now an error.
-                //this *should* get around that but I'm super unhappy about it
-                var targetInstance = new (<any>target)();
-                Object.keys(targetInstance).forEach((key : string) => {
-                    this[key] = targetInstance[key];
-                });
-                
-                //target.call(this); -> this no longer works :( thanks ES6, ya jerk
-                
+                //this gets around that but I'm super unhappy about it
+                try {
+                    target.call(this);// -> this no longer works :( thanks ES6, ya jerk
+                }
+                catch (e) {
+                    if (e.message.indexOf("Class constructor") === 0) {
+                        ES6ConstructorUtil.invokeES6Constructor(this, target);
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+
                 //respect the users `created` hook if implemented
                 if (typeof proto.created === 'function') proto.created.call(this);
             }
@@ -280,6 +286,15 @@ function component(name : string, template : string, vueConfig : any = {}) : any
 
         return target;
     }
+}
+
+function extractConstructorBody(fn : Function) {
+    var fnStr = fn.toString();
+    var start = fnStr.indexOf("super");
+    if (start == -1) {
+        start = fnStr.indexOf("{");
+    }
+    console.log(fnStr.substr(start));
 }
 
 (<any>Vue).pluginPromise = Promise.resolve();

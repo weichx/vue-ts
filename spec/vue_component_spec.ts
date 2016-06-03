@@ -2,6 +2,7 @@ import {VueComponent} from "../src/vue_ext";
 import {VueApi} from "../src/vue_api";
 import Vue = require('vue');
 import {InstanceCallback, ClassCallback} from "../built/src/vue_ext";
+import {ES6ConstructorUtil} from "../src/es6_constructor_util";
 
 type DoneFn = () => void;
 
@@ -20,11 +21,7 @@ describe("Component Creation Plugins", function () {
                 instance.property = "it worked";
             });
         });
-
-        // VueComponentCreationPlugins.push(function (instance : PluginTest) {
-        //     instance.property = "it worked";
-        // });
-
+        
         @VueComponent("plugin-test", "#noop")
         class PluginTest extends VueApi {
             public property : string;
@@ -37,7 +34,7 @@ describe("Component Creation Plugins", function () {
     });
 
     it('should run creation plugins on all instances', function (done : DoneFn) {
-        var i = 0;
+        var i = 1;
         VueComponent.plugin(function (instanceChain : Array<InstanceCallback>) {
             instanceChain.push(function (instance : any) {
                 instance.property = i++;
@@ -47,12 +44,15 @@ describe("Component Creation Plugins", function () {
         @VueComponent("plugin-test", "#noop")
         class PluginTest extends VueApi {
             public property : number;
+            constructor() { super();}
         }
 
         getVueClass(PluginTest).then(function (type : any) {
-            expect(new type().property).toBe(0);
             expect(new type().property).toBe(1);
+            expect(new type().property).toBe(2);
             done();
+        }).catch(function (e :any) {
+            console.log(e);
         });
     });
 
@@ -61,7 +61,7 @@ describe("Component Creation Plugins", function () {
 describe("Component Resolution Plugins", function () {
 
     it('should run resolution plugins', function (done : DoneFn) {
-        var i = 0;
+        var i = 100;
 
         VueComponent.plugin(function (instanceChain : Array<InstanceCallback>, classChain : Array<ClassCallback>) {
             classChain.push(function (type : any, vueClass : Function) : any {
@@ -78,7 +78,7 @@ describe("Component Resolution Plugins", function () {
         }
 
         getVueClass(PluginTest).then(function (type : any) {
-            expect(type.someProp).toBe(0);
+            expect(type.someProp).toBe(100);
             done();
         });
     });
@@ -86,7 +86,8 @@ describe("Component Resolution Plugins", function () {
 
 describe('Inheritance', function () {
 
-    fit('should invoke a base class constructor', function (done : DoneFn) {
+    it('should invoke a base class constructor', function (done : DoneFn) {
+
         class X extends VueApi {
             public x : number;
             constructor() {
@@ -138,4 +139,85 @@ describe('Inheritance', function () {
             done();
         });
     });
+    
+});
+
+describe("E6ConstructorUtil", function () {
+
+    it('should invoke constructor normally', function () {
+        class C0 {
+            public c0Prop : string;
+            constructor() {
+                this.c0Prop = "c0";
+            }
+        }
+        var instance : any = {};
+        ES6ConstructorUtil.invokeES6Constructor(instance, C0);
+        expect(instance.c0Prop).toBe("c0");
+    });
+
+    it('should invoke base constructor even if constructor not provided', function() {
+        class C0 {
+            public c0Prop : string;
+            constructor() {
+                this.c0Prop = "c0";
+            }
+        }
+
+        class C1 extends C0 { constructor() {super();}}
+
+        var instance : any = {};
+        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+        expect(instance.c0Prop).toBe("c0");
+    });
+
+    it('should invoke nested base constructor', function() {
+        class C0 {
+            public c0Prop : string;
+            constructor() {
+                this.c0Prop = "c0";
+            }
+        }
+
+        class C1 extends C0 {
+            public c1Prop : string;
+            constructor() {
+                super();
+                this.c1Prop = "c1";
+            }
+        }
+
+        class C2 extends C1 {
+            public c2Prop : string;
+            constructor() {
+                super();
+                this.c2Prop = "c2";
+            }
+        }
+
+        var instance : any = {};
+        ES6ConstructorUtil.invokeES6Constructor(instance, C2);
+        expect(instance.c0Prop).toBe("c0");
+        expect(instance.c1Prop).toBe("c1");
+        expect(instance.c2Prop).toBe("c2");
+    });
+
+    it('should be able to invoke a constructor twice', function () {
+        class C0 {
+            public c0Prop : string;
+            constructor() {
+                this.c0Prop = "c0";
+            }
+        }
+
+        class C1 extends C0 { constructor() {super();}}
+
+        var instance : any = {};
+        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+        expect(instance.c0Prop).toBe("c0");
+        var instance : any = {};
+        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+        expect(instance.c0Prop).toBe("c0");
+    })
+
 });

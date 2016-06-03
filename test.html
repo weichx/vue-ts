@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script>
+
+    function strip(input, open, close, shouldMatch) {
+        var endIdx = -1;
+        var lengthTarget = shouldMatch ? 1 : 0;
+        var stack = [];
+        for (var i = 0; i < input.length; i++) {
+            var char = input[i];
+            if (char === open) {
+                stack.push(open);
+            }
+            else if (char === close) {
+                if (stack.length === lengthTarget) {
+                    endIdx = i;
+                    break;
+                }
+                else {
+                    stack.pop();
+                }
+            }
+        }
+        if (endIdx === -1) {
+            return input;
+        }
+        if (input[0] === open) {
+            return input.substr(1, endIdx);
+        }
+        else {
+            return input.substr(0, endIdx);
+        }
+    }
+
+    function extractConstructorBody(classRef) {
+        var RE_BLOCKS = new RegExp([
+                    /\/(\*)[^*]*\*+(?:[^*\/][^*]*\*+)*\//.source,           // $1: multi-line comment
+                    /\/(\/)[^\n]*$/.source,                                 // $2 single-line comment
+                    /"(?:[^"\\]*|\\[\S\s])*"|'(?:[^'\\]*|\\[\S\s])*'/.source, // - string, don't care about embedded eols
+                    /(?:[$\w\)\]]|\+\+|--)\s*\/(?![*\/])/.source,           // - division operator
+                    /\/(?=[^*\/])[^[/\\]*(?:(?:\[(?:\\.|[^\]\\]*)*\]|\\.)[^[/\\]*)*?\/[gim]*/.source
+                ].join('|'),                                            // - regex
+                'gm'  // note: global+multiline with replace() need test
+        );
+
+        // remove comments, keep other blocks
+        function stripComments(str) {
+            return str.replace(RE_BLOCKS, function (match, mlc, slc) {
+                return mlc ? ' ' :         // multiline comment (replace with space)
+                        slc ? '' :          // single/multiline comment
+                                match;              // divisor, regex, or string, return as-is
+            });
+        }
+
+        var fnStr = stripComments(classRef.toString());
+        var start = fnStr.indexOf("constructor");
+        var ctorStr = "";
+        if (start !== -1) {
+            ctorStr = strip(fnStr.substr(start + "constructor".length), '{', '}', false);
+            start = ctorStr.indexOf('{');
+            ctorStr = ctorStr.substr(start + 1);
+            ctorStr = strip(ctorStr, '{', '}', false);
+            //todo arguments not supported
+            return ctorStr.replace(/super\(/g, `
+                /*arguments not supported yet*/
+                __$super$__.shift().call(this, __$super$__
+            `);
+        }
+        else {
+            return "";
+        }
+    }
+
+    class Test1 {
+
+        //comment me brah!
+        constructor() {/*strip meh*/
+            this.blah = 1; //mk
+            var t = "Test1";
+
+            function stuff() {
+                var x = "/*leave me in*/"
+            }
+        }
+
+        __ctor() {
+            this.blah = 1;
+        }
+
+        doThing() {
+            this.thing = "fuck yeah";
+        }
+    }
+
+    class Test2 extends Test1 {
+
+        constructor() {
+            super();
+            var t = "Test2";
+            this.stuff = 11;
+
+            function fail() {
+            }
+
+
+        }
+    }
+
+    class Test3 extends Test2 {
+
+        constructor() {
+            super();
+            var t = "Test3";
+            this.test3 = true;
+        }
+    }
+
+    function buildCtor(classRef) {
+        if (classRef.__$ctor$__) return;
+
+        classRef.__$ctor$__ = new Function("__$super$__", extractConstructorBody(classRef));
+        var heirarchy = [];
+        var fnproto = (function () {
+        }).__proto__;
+        var ptr = classRef.__proto__;
+        while (ptr && ptr !== fnproto) {
+            buildCtor(ptr);
+            heirarchy.push(ptr.__$ctor$__);
+            ptr = ptr.__proto__;
+        }
+        classRef.__$heirarchy$__ = heirarchy;
+    }
+
+    function invokeConstructor(thisRef, classRef) {
+        buildCtor(classRef);
+        var heirarchy = classRef.__$heirarchy$__;
+        classRef.__$ctor$__.call(thisRef, heirarchy);
+    }
+
+    //    var testBody1 = extractConstructorBody(Test1);
+    //    var testBody2 = extractConstructorBody(Test2);
+    //    var testBody3 = extractConstructorBody(Test3);
+    //    var fn1 = new Function(testBody1);
+    //    fn1.prototype = Test1.prototype;
+    //    var fn2 = new Function("__$super$__", testBody2);
+    //    var x2 = new fn2([fn1]);
+    //    var fn3 = new Function("__$super$__", testBody3);
+    //    console.log(new fn3([fn2, fn1]));
+
+    var x = {};
+    invokeConstructor(x, Test3);
+    console.log(x);
+
+</script>
+</body>
+</html>
