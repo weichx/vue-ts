@@ -1,1 +1,1 @@
-module.exports = require("./built/srcv/vue_ext");
+module.exports = require("./built/src/vue_ext");
