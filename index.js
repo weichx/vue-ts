@@ -1,0 +1,1 @@
+module.exports = require("./built/srcv/vue_ext");

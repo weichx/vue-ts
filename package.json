@@ -2,8 +2,8 @@
   "name": "vue-ts",
   "version": "1.0.7",
   "description": "Better Vue -> Typescript integration",
-  "main": "built/src/vue_ext.js",
-  "typings": "build/src/vue_text.d.ts",
+  "main": "index.js",
+  "typings": "build/src/vue_ext.d.ts",
   "scripts": {
     "test": "tsc && gulp"
   },
