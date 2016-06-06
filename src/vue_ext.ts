@@ -288,14 +288,6 @@ function component(name : string, template : string, vueConfig : any = {}) : any
     }
 }
 
-function extractConstructorBody(fn : Function) {
-    var fnStr = fn.toString();
-    var start = fnStr.indexOf("super");
-    if (start == -1) {
-        start = fnStr.indexOf("{");
-    }
-    console.log(fnStr.substr(start));
-}
 
 (<any>Vue).pluginPromise = Promise.resolve();
 
