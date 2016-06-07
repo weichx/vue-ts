@@ -36,10 +36,10 @@ exports.data = data;
 function prop(targetPrototypeOrOptions, key) {
     if (Vue.util.isPlainObject(targetPrototypeOrOptions) && !key) {
         return function (targetPrototype, key) {
-            let propOptions = targetPrototypeOrOptions;
-            let type = targetPrototype.constructor;
-            let propFields = propFieldMap.get(type) || {};
-            let propDescriptor = propFields[key] || {};
+            var propOptions = targetPrototypeOrOptions;
+            var type = targetPrototype.constructor;
+            var propFields = propFieldMap.get(type) || {};
+            var propDescriptor = propFields[key] || {};
             propDescriptor.coerce = propOptions.coerce || propDescriptor.coerce;
             propDescriptor.required = propOptions.required || propDescriptor.required;
             propDescriptor.type = propOptions.type || propDescriptor.type;
@@ -51,8 +51,8 @@ function prop(targetPrototypeOrOptions, key) {
         };
     }
     else {
-        let type = targetPrototypeOrOptions.constructor;
-        let propFields = propFieldMap.get(type) || {};
+        var type = targetPrototypeOrOptions.constructor;
+        var propFields = propFieldMap.get(type) || {};
         propFields[key] = { required: false };
         propFieldMap.set(type, propFields);
     }
@@ -99,7 +99,8 @@ exports.watch = watch;
 //annotated, we need to collect the values and compile the corresponding vue description. We also need to suck in
 //all the life cycle hook methods on the typescript class, gather all the property accessors(get/set) and then
 //slap all this data onto a new config object when the component's `created` hook fires.
-function component(name, template, vueConfig = {}) {
+function component(name, template, vueConfig) {
+    if (vueConfig === void 0) { vueConfig = {}; }
     return function (target) {
         var proto = target.prototype;
         var events = eventMap.get(target) || {};
@@ -109,16 +110,17 @@ function component(name, template, vueConfig = {}) {
         //todo error if something is prop & data
         //gets default values from current instance to slap onto vue instance
         var dataFn = function () {
+            var _this = this;
             var output = {};
-            Object.keys(dataFields).forEach((key) => {
-                output[key] = this[key];
+            Object.keys(dataFields).forEach(function (key) {
+                output[key] = _this[key];
             });
             return output;
         };
         //gets props and default values from current isntance to slap onto vue instance
         var getProps = function () {
             var output = {};
-            Object.keys(propFields).forEach((key) => {
+            Object.keys(propFields).forEach(function (key) {
                 output[key] = propFields[key];
             });
             return output;
@@ -133,19 +135,19 @@ function component(name, template, vueConfig = {}) {
             //because of the way Vue extension works (with object.create) we never get our constructors invoked
             //this code will invoke the class constructors as expected and handle some annotation actions
             created: function () {
-                //todo convert this to a plug-in architecture
-                Object.keys(watches).forEach((expression) => {
-                    watches[expression].forEach((watch) => {
-                        this.$watch(expression, watch.method, watch.options);
+                var _this = this;
+                Object.keys(watches).forEach(function (expression) {
+                    watches[expression].forEach(function (watch) {
+                        _this.$watch(expression, watch.method, watch.options);
                     });
                 });
-                Object.keys(events).forEach((key) => {
+                Object.keys(events).forEach(function (key) {
                     var descriptor = events[key];
                     if (descriptor.once) {
-                        this.$once(key, descriptor.method);
+                        _this.$once(key, descriptor.method);
                     }
                     else {
-                        this.$on(key, descriptor.method);
+                        _this.$on(key, descriptor.method);
                     }
                 });
                 for (var i = 0; i < creationPlugins.length; i++) {
@@ -225,14 +227,6 @@ function component(name, template, vueConfig = {}) {
         })(target);
         return target;
     };
-}
-function extractConstructorBody(fn) {
-    var fnStr = fn.toString();
-    var start = fnStr.indexOf("super");
-    if (start == -1) {
-        start = fnStr.indexOf("{");
-    }
-    console.log(fnStr.substr(start));
 }
 Vue.pluginPromise = Promise.resolve();
 function plugin(fn) {

@@ -142,82 +142,82 @@ describe('Inheritance', function () {
     
 });
 
-describe("E6ConstructorUtil", function () {
+// describe("E6ConstructorUtil", function () {
+//
+//     it('should invoke constructor normally', function () {
+//         class C0 {
+//             public c0Prop : string;
+//             constructor() {
+//                 this.c0Prop = "c0";
+//             }
+//         }
+//         var instance : any = {};
+//         ES6ConstructorUtil.invokeES6Constructor(instance, C0);
+//         expect(instance.c0Prop).toBe("c0");
+//     });
+//
+//     it('should invoke base constructor even if constructor not provided', function() {
+//         class C0 {
+//             public c0Prop : string;
+//             constructor() {
+//                 this.c0Prop = "c0";
+//             }
+//         }
+//
+//         class C1 extends C0 { constructor() {super();}}
+//
+//         var instance : any = {};
+//         ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+//         expect(instance.c0Prop).toBe("c0");
+//     });
+//
+//     it('should invoke nested base constructor', function() {
+//         class C0 {
+//             public c0Prop : string;
+//             constructor() {
+//                 this.c0Prop = "c0";
+//             }
+//         }
+//
+//         class C1 extends C0 {
+//             public c1Prop : string;
+//             constructor() {
+//                 super();
+//                 this.c1Prop = "c1";
+//             }
+//         }
+//
+//         class C2 extends C1 {
+//             public c2Prop : string;
+//             constructor() {
+//                 super();
+//                 this.c2Prop = "c2";
+//             }
+//         }
+//
+//         var instance : any = {};
+//         ES6ConstructorUtil.invokeES6Constructor(instance, C2);
+//         expect(instance.c0Prop).toBe("c0");
+//         expect(instance.c1Prop).toBe("c1");
+//         expect(instance.c2Prop).toBe("c2");
+//     });
+//
+//     it('should be able to invoke a constructor twice', function () {
+//         class C0 {
+//             public c0Prop : string;
+//             constructor() {
+//                 this.c0Prop = "c0";
+//             }
+//         }
+//
+//         class C1 extends C0 { constructor() {super();}}
+//
+//         var instance : any = {};
+//         ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+//         expect(instance.c0Prop).toBe("c0");
+//         var instance : any = {};
+//         ES6ConstructorUtil.invokeES6Constructor(instance, C1);
+//         expect(instance.c0Prop).toBe("c0");
+//     })
 
-    it('should invoke constructor normally', function () {
-        class C0 {
-            public c0Prop : string;
-            constructor() {
-                this.c0Prop = "c0";
-            }
-        }
-        var instance : any = {};
-        ES6ConstructorUtil.invokeES6Constructor(instance, C0);
-        expect(instance.c0Prop).toBe("c0");
-    });
-
-    it('should invoke base constructor even if constructor not provided', function() {
-        class C0 {
-            public c0Prop : string;
-            constructor() {
-                this.c0Prop = "c0";
-            }
-        }
-
-        class C1 extends C0 { constructor() {super();}}
-
-        var instance : any = {};
-        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
-        expect(instance.c0Prop).toBe("c0");
-    });
-
-    it('should invoke nested base constructor', function() {
-        class C0 {
-            public c0Prop : string;
-            constructor() {
-                this.c0Prop = "c0";
-            }
-        }
-
-        class C1 extends C0 {
-            public c1Prop : string;
-            constructor() {
-                super();
-                this.c1Prop = "c1";
-            }
-        }
-
-        class C2 extends C1 {
-            public c2Prop : string;
-            constructor() {
-                super();
-                this.c2Prop = "c2";
-            }
-        }
-
-        var instance : any = {};
-        ES6ConstructorUtil.invokeES6Constructor(instance, C2);
-        expect(instance.c0Prop).toBe("c0");
-        expect(instance.c1Prop).toBe("c1");
-        expect(instance.c2Prop).toBe("c2");
-    });
-
-    it('should be able to invoke a constructor twice', function () {
-        class C0 {
-            public c0Prop : string;
-            constructor() {
-                this.c0Prop = "c0";
-            }
-        }
-
-        class C1 extends C0 { constructor() {super();}}
-
-        var instance : any = {};
-        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
-        expect(instance.c0Prop).toBe("c0");
-        var instance : any = {};
-        ES6ConstructorUtil.invokeES6Constructor(instance, C1);
-        expect(instance.c0Prop).toBe("c0");
-    })
-
-});
+// });

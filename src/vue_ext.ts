@@ -182,7 +182,6 @@ function component(name : string, template : string, vueConfig : any = {}) : any
             //because of the way Vue extension works (with object.create) we never get our constructors invoked
             //this code will invoke the class constructors as expected and handle some annotation actions
             created: function () : void {
-                //todo convert this to a plug-in architecture
                 Object.keys(watches).forEach((expression : string) => {
                     watches[expression].forEach((watch : any) => {
                         this.$watch(expression, watch.method, watch.options);
@@ -286,15 +285,6 @@ function component(name : string, template : string, vueConfig : any = {}) : any
 
         return target;
     }
-}
-
-function extractConstructorBody(fn : Function) {
-    var fnStr = fn.toString();
-    var start = fnStr.indexOf("super");
-    if (start == -1) {
-        start = fnStr.indexOf("{");
-    }
-    console.log(fnStr.substr(start));
 }
 
 (<any>Vue).pluginPromise = Promise.resolve();

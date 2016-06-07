@@ -1,5 +1,7 @@
-class VueApi {
-    static setVueClass(subclass) {
+var VueApi = (function () {
+    function VueApi() {
+    }
+    VueApi.setVueClass = function (subclass) {
         this.__vueType = subclass;
         var array = this.__map[this.toString()];
         if (array) {
@@ -7,22 +9,24 @@ class VueApi {
                 array[i](subclass);
             }
         }
-    }
+    };
     //have to play games around exactly when this resolve occurs
     //or routing wont work because it thinks the component is
     //ready when it isnt and we break the app
-    static getVueClassAsync() {
-        return (resolve) => {
-            if (this.__vueType) {
-                resolve(this.__vueType);
+    VueApi.getVueClassAsync = function () {
+        var _this = this;
+        return function (resolve) {
+            if (_this.__vueType) {
+                resolve(_this.__vueType);
             }
             else {
                 var array = [];
-                this.__map[this.toString()] = array;
+                _this.__map[_this.toString()] = array;
                 array.push(resolve);
             }
         };
-    }
-}
-VueApi.__map = {};
+    };
+    VueApi.__map = {};
+    return VueApi;
+})();
 exports.VueApi = VueApi;

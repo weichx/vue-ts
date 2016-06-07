@@ -68,11 +68,7 @@ function extractConstructorBody(classRef) {
             //replace super() and super.xxxx with special variable
             //for super() case invoke with call, leave off last ) on purpose
             //todo arguments not supported
-            return ctorStr.replace(/super\(/g, `
-                /*arguments not supported yet*/
-                var parentCtx = __$super$__.shift();
-                parentCtx.call(this, __$super$__ 
-            `);
+            return ctorStr.replace(/super\(/g, "\n                /*arguments not supported yet*/\n                var parentCtx = __$super$__.shift();\n                parentCtx.call(this, __$super$__ \n            ");
         }
     }
     else {
@@ -117,4 +113,4 @@ function invokeES6Constructor(thisRef, classRef) {
     var heirarchy = classRef.__$heirarchy$__.slice(0);
     classRef.__$ctor$__.call(thisRef, heirarchy);
 }
-exports.ES6ConstructorUtil = { invokeES6Constructor };
+exports.ES6ConstructorUtil = { invokeES6Constructor: invokeES6Constructor };
